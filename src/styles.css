@@ -50,3 +50,25 @@ button.btn.sm{padding:4px 9px;font-size:12px;}
 .empty{text-align:center;color:var(--muted);padding:30px;}
 .footer-note{text-align:center;color:var(--muted);font-size:12px;margin:24px 0;}
 .flag{color:#b8860b;font-size:11px;}
+
+/* ---------- Mobile ---------- */
+@media(max-width:700px){
+  header.app-header{padding:12px 14px;}
+  header.app-header h1{font-size:17px;}
+  main{padding:12px;}
+  .card{padding:14px;}
+  nav.tabs{
+    flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;
+    padding:0 10px;scrollbar-width:none;
+  }
+  nav.tabs::-webkit-scrollbar{display:none;}
+  nav.tabs button{padding:10px 12px;font-size:13px;white-space:nowrap;flex:0 0 auto;}
+  table{display:block;overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch;}
+  th,td{padding:7px 8px;font-size:12.5px;}
+  .row input, .row select, .row textarea{width:100% !important;}
+  .totals{width:100%;max-width:100%;margin-left:0;}
+  .modal{padding:14px;max-width:100%;}
+  .modal-bg{padding:12px 6px;}
+  .grid-2{grid-template-columns:1fr;}
+}
+
