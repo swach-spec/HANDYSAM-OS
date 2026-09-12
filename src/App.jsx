@@ -6,12 +6,14 @@ import Quotations from './pages/Quotations';
 import Invoices from './pages/Invoices';
 import CreditNotes from './pages/CreditNotes';
 import Bills from './pages/Bills';
+import POS from './pages/POS';
 import Inventory from './pages/Inventory';
 import Expenses from './pages/Expenses';
 import Books from './pages/Books';
 import Settings from './pages/Settings';
 
 const TABS = [
+  { id: 'pos', label: 'POS' },
   { id: 'dashboard', label: 'Dashboard' },
   { id: 'products', label: 'Products' },
   { id: 'quotations', label: 'Quotations' },
@@ -26,7 +28,7 @@ const TABS = [
 
 const ROLE_TABS = {
   admin: TABS.map(t => t.id),
-  accountant: ['dashboard', 'quotations', 'invoices', 'credit-notes', 'bills', 'expenses', 'books'],
+  accountant: ['pos', 'dashboard', 'quotations', 'invoices', 'credit-notes', 'bills', 'expenses', 'books'],
   procurement: ['products', 'inventory', 'bills'],
 };
 
@@ -52,7 +54,8 @@ export default function App({ session, role }) {
           <button key={t.id} className={tab === t.id ? 'active' : ''} onClick={() => setTab(t.id)}>{t.label}</button>
         ))}
       </nav>
-      <main>
+      <main style={tab === 'pos' ? { padding: 0, maxWidth: 'none' } : undefined}>
+        {tab === 'pos' && <POS />}
         {tab === 'dashboard' && <Dashboard goTo={setTab} />}
         {tab === 'products' && <Products />}
         {tab === 'quotations' && <Quotations />}

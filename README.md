@@ -73,6 +73,27 @@ accounting/inventory boundary — `06e` handles this with a
 invoice (their permission) without being granted direct write access
 to inventory tables (which they shouldn't have).
 
+## Point of Sale (POS)
+
+Run `07a-pos-sale-fn.sql` to enable it. A new **POS** tab (admin and
+accountant only) gives a dedicated register screen:
+
+- Tap a product to add it to the sale — no confirmation dialog, no
+  draft stage. This is for instant walk-in sales, not the
+  quote-first workflow the rest of the app uses.
+- One "Charge" click creates an already-paid, already-confirmed
+  invoice, deducts stock, and issues a receipt — all in a single
+  atomic database call (`handysam_pos_sale`), so a half-finished sale
+  can't leave stock or the ledger in an inconsistent state.
+- Designed as its own full-screen layout (not boxed like the other
+  tabs) since this is meant to be the screen staff live in all day:
+  a light, browsable product catalog on the left, a dark fixed
+  register panel on the right with the cart, payment method, and
+  total — deliberately visually distinct from "browsing" so it's
+  always clear when you're about to commit a sale.
+- Responsive down to a phone: the register panel stacks below the
+  catalog instead of sitting beside it.
+
 ## 2. Configure the app
 
 ```bash
