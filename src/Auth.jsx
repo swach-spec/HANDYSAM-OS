@@ -41,10 +41,14 @@ export default function Auth() {
         {error && <div style={{ color: '#c0392b', fontSize: 12.5, marginBottom: 10 }}>{error}</div>}
         {sent && <div style={{ color: '#1f8a4c', fontSize: 12.5, marginBottom: 10 }}>Magic link sent — check your email.</div>}
 
-        <button className="btn gold" type="submit" disabled={busy} style={{ width: '100%', marginBottom: 8 }}>
+        <button type="submit" disabled={busy}
+          style={{ width: '100%', marginBottom: 8, padding: '11px 14px', borderRadius: 6, border: 'none',
+                   background: '#ed6a23', color: '#ffffff', fontWeight: 700, fontSize: 15, cursor: 'pointer' }}>
           {busy ? 'Signing in…' : 'Sign in'}
         </button>
-        <button type="button" className="btn ghost" onClick={sendMagicLink} disabled={busy} style={{ width: '100%' }}>
+        <button type="button" onClick={sendMagicLink} disabled={busy}
+          style={{ width: '100%', padding: '10px 14px', borderRadius: 6, border: '1px solid #d0d0d0',
+                   background: '#ffffff', color: '#1a1a1a', fontSize: 13.5, cursor: 'pointer' }}>
           Email me a magic link instead
         </button>
       </form>
