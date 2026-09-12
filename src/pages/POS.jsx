@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { fmt, calcTotals } from '../lib/format';
 import { buildReceiptPDF } from '../lib/pdf';
+import { lazy, Suspense } from 'react';
+const CameraScanner = lazy(() => import('./CameraScanner'));
 
 export default function POS() {
   const [settings, setSettings] = useState(null);
@@ -14,6 +16,7 @@ export default function POS() {
   const [payment, setPayment] = useState(null);
   const [charging, setCharging] = useState(false);
   const [sale, setSale] = useState(null); // {invoiceNumber, receiptNumber, total}
+  const [scanning, setScanning] = useState(false);
 
   useEffect(() => {
     supabase.from('handysam_settings').select('*').eq('venture', 'handysam').single().then(({ data }) => setSettings(data));
@@ -36,6 +39,10 @@ export default function POS() {
     const match = findByCode(code);
     if (match) { addToCart(match); e.target.value = ''; }
     else { e.target.style.borderColor = 'var(--red)'; setTimeout(() => { e.target.style.borderColor = ''; }, 600); }
+  }
+  function handleCameraDetect(code) {
+    const match = findByCode(code);
+    if (match) addToCart(match);
   }
 
   const t = calcTotals(cart, discountPct);
@@ -85,6 +92,7 @@ export default function POS() {
         <div className="pos-catalog-header">
           <input placeholder="Search products…" value={search} onChange={e => setSearch(e.target.value)} />
           <input placeholder="Scan barcode / SKU…" style={{ maxWidth: 200 }} onKeyDown={handleScan} autoFocus />
+          <button className="btn ghost" onClick={() => setScanning(true)} title="Scan with phone camera">📷 Camera</button>
         </div>
         <div className="pos-cats">
           {categories.map(c => (
@@ -158,6 +166,12 @@ export default function POS() {
           </>
         )}
       </div>
+
+      {scanning && (
+        <Suspense fallback={null}>
+          <CameraScanner onDetect={handleCameraDetect} onClose={() => setScanning(false)} />
+        </Suspense>
+      )}
     </div>
   );
 }

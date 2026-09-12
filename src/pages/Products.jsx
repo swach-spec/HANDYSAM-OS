@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { uploadProductPhoto } from '../lib/storage';
+import { lazy, Suspense } from 'react';
+const CameraScanner = lazy(() => import('./CameraScanner'));
 
 export default function Products() {
   const [products, setProducts] = useState([]);
   const [cat, setCat] = useState('all');
   const [q, setQ] = useState('');
+  const [scanningFor, setScanningFor] = useState(null); // product id currently receiving a camera scan
   const fileInputs = useRef({});
 
   async function load() {
@@ -97,9 +100,12 @@ export default function Products() {
                 <td className="muted">{p.category}</td>
                 <td>{p.description}{p.flagged && <div className="flag">⚑ cost not confirmed</div>}</td>
                 <td>
-                  <input placeholder="Scan or type…" style={{ width: 110 }} defaultValue={p.barcode || ''}
-                    onKeyDown={e => { if (e.key === 'Enter') e.target.blur(); }}
-                    onBlur={e => updateBarcode(p.id, e.target.value)} />
+                  <div className="row" style={{ flexWrap: 'nowrap' }}>
+                    <input key={p.id + '-' + (p.barcode || '')} placeholder="Scan or type…" style={{ width: 100 }} defaultValue={p.barcode || ''}
+                      onKeyDown={e => { if (e.key === 'Enter') e.target.blur(); }}
+                      onBlur={e => updateBarcode(p.id, e.target.value)} />
+                    <button className="btn ghost sm" title="Scan with phone camera" onClick={() => setScanningFor(p.id)}>📷</button>
+                  </div>
                 </td>
                 <td>{p.uom}</td>
                 <td><input type="number" style={{ width: 90 }} defaultValue={p.cost ?? ''} onBlur={e => updateField(p.id, 'cost', e.target.value)} /></td>
@@ -112,6 +118,15 @@ export default function Products() {
           </tbody>
         </table>
       </div>
+
+      {scanningFor && (
+        <Suspense fallback={null}>
+          <CameraScanner
+            onDetect={(code) => { updateBarcode(scanningFor, code); setScanningFor(null); }}
+            onClose={() => setScanningFor(null)}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }

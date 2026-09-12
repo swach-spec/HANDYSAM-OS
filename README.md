@@ -115,11 +115,14 @@ Run `08a-sku-barcode-photo.sql` then `08b-storage-bucket-photos.sql`.
     default — scan an item and it's added to the cart immediately.
   - In **Products**, click into a row's Barcode field and scan to
     fill it in.
-  - A **phone camera** as a scanner (rather than a dedicated
-    handheld scanner) is a separate feature — it needs a
-    camera-scanning library and permissions handling. Worth adding
-    if you don't want to buy dedicated scanner hardware, but it's a
-    genuinely different build — say the word if you want it.
+  - **Phone camera scanning** is also built in — tap the 📷 Camera
+    button in POS (or next to a product's Barcode field in Products)
+    to open a live camera overlay that decodes barcodes and QR codes
+    directly (via ZXing, no server round-trip). Needs HTTPS (Vercel
+    is fine) and camera permission. This library only downloads when
+    someone actually taps the camera button, not on every page load,
+    so it doesn't slow down the app for people using a physical
+    scanner instead.
 
 ## 2. Configure the app
 
