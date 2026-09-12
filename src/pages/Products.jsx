@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { uploadProductPhoto } from '../lib/storage';
 
 export default function Products() {
   const [products, setProducts] = useState([]);
   const [cat, setCat] = useState('all');
   const [q, setQ] = useState('');
+  const fileInputs = useRef({});
 
   async function load() {
     const { data, error } = await supabase.from('handysam_products').select('*').order('category').order('description');
@@ -14,7 +16,8 @@ export default function Products() {
 
   const cats = [...new Set(products.map(p => p.category))];
   const rows = products.filter(p =>
-    (cat === 'all' || p.category === cat) && p.description.toLowerCase().includes(q.toLowerCase())
+    (cat === 'all' || p.category === cat) &&
+    (p.description.toLowerCase().includes(q.toLowerCase()) || (p.sku || '').toLowerCase().includes(q.toLowerCase()) || (p.barcode || '').includes(q))
   );
 
   async function updateField(id, field, value) {
@@ -22,6 +25,25 @@ export default function Products() {
     if (field === 'cost') patch.flagged = !patch.cost;
     setProducts(ps => ps.map(p => p.id === id ? { ...p, ...patch } : p));
     await supabase.from('handysam_products').update(patch).eq('id', id);
+  }
+
+  async function updateBarcode(id, value) {
+    const barcode = value.trim() || null;
+    setProducts(ps => ps.map(p => p.id === id ? { ...p, barcode } : p));
+    const { error } = await supabase.from('handysam_products').update({ barcode }).eq('id', id);
+    if (error) alert('Could not save barcode — it may already be used on another product.');
+  }
+
+  async function handlePhotoChange(id, e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const url = await uploadProductPhoto(supabase, id, file);
+      await supabase.from('handysam_products').update({ photo_url: url }).eq('id', id);
+      setProducts(ps => ps.map(p => p.id === id ? { ...p, photo_url: url } : p));
+    } catch (err) {
+      alert('Photo upload failed: ' + err.message);
+    }
   }
 
   async function deleteProduct(id) {
@@ -44,7 +66,7 @@ export default function Products() {
     <div className="card">
       <h2>Product & Price List</h2>
       <div className="row" style={{ marginBottom: 12 }}>
-        <input className="search" placeholder="Search product..." value={q} onChange={e => setQ(e.target.value)} />
+        <input className="search" placeholder="Search description, SKU or barcode..." value={q} onChange={e => setQ(e.target.value)} />
         <select value={cat} onChange={e => setCat(e.target.value)} style={{ minWidth: 180 }}>
           <option value="all">All categories</option>
           {cats.map(c => <option key={c} value={c}>{c}</option>)}
@@ -53,12 +75,32 @@ export default function Products() {
       </div>
       <div style={{ maxHeight: 560, overflow: 'auto' }}>
         <table>
-          <thead><tr><th>Category</th><th>Description</th><th>UOM</th><th>Cost</th><th>Sell Price</th><th>Stock</th><th></th></tr></thead>
+          <thead><tr><th>Photo</th><th>SKU</th><th>Category</th><th>Description</th><th>Barcode</th><th>UOM</th><th>Cost</th><th>Sell Price</th><th>Stock</th><th></th></tr></thead>
           <tbody>
             {rows.map(p => (
               <tr key={p.id}>
+                <td>
+                  <div
+                    onClick={() => fileInputs.current[p.id]?.click()}
+                    style={{ width: 36, height: 36, borderRadius: 6, background: '#f0f1f3', border: '1px solid var(--border)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}
+                    title="Click to upload a photo"
+                  >
+                    {p.photo_url
+                      ? <img src={p.photo_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      : <span style={{ fontSize: 16, color: '#bbb' }}>＋</span>}
+                  </div>
+                  <input type="file" accept="image/*" style={{ display: 'none' }}
+                    ref={el => { fileInputs.current[p.id] = el; }}
+                    onChange={e => handlePhotoChange(p.id, e)} />
+                </td>
+                <td className="muted">{p.sku}</td>
                 <td className="muted">{p.category}</td>
                 <td>{p.description}{p.flagged && <div className="flag">⚑ cost not confirmed</div>}</td>
+                <td>
+                  <input placeholder="Scan or type…" style={{ width: 110 }} defaultValue={p.barcode || ''}
+                    onKeyDown={e => { if (e.key === 'Enter') e.target.blur(); }}
+                    onBlur={e => updateBarcode(p.id, e.target.value)} />
+                </td>
                 <td>{p.uom}</td>
                 <td><input type="number" style={{ width: 90 }} defaultValue={p.cost ?? ''} onBlur={e => updateField(p.id, 'cost', e.target.value)} /></td>
                 <td><input type="number" style={{ width: 90 }} defaultValue={p.sell ?? ''} onBlur={e => updateField(p.id, 'sell', e.target.value)} /></td>
@@ -66,7 +108,7 @@ export default function Products() {
                 <td><button className="btn danger sm" onClick={() => deleteProduct(p.id)}>Delete</button></td>
               </tr>
             ))}
-            {rows.length === 0 && <tr><td colSpan={7} className="empty">No products match.</td></tr>}
+            {rows.length === 0 && <tr><td colSpan={10} className="empty">No products match.</td></tr>}
           </tbody>
         </table>
       </div>

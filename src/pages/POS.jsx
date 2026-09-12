@@ -25,6 +25,19 @@ export default function POS() {
     (category === 'All' || p.category === category) && p.description.toLowerCase().includes(search.toLowerCase())
   );
 
+  function findByCode(code) {
+    const c = code.trim().toLowerCase();
+    if (!c) return null;
+    return products.find(p => (p.sku && p.sku.toLowerCase() === c) || (p.barcode && p.barcode.toLowerCase() === c));
+  }
+  function handleScan(e) {
+    if (e.key !== 'Enter') return;
+    const code = e.target.value;
+    const match = findByCode(code);
+    if (match) { addToCart(match); e.target.value = ''; }
+    else { e.target.style.borderColor = 'var(--red)'; setTimeout(() => { e.target.style.borderColor = ''; }, 600); }
+  }
+
   const t = calcTotals(cart, discountPct);
 
   function addToCart(p) {
@@ -70,7 +83,8 @@ export default function POS() {
     <div className="pos-shell">
       <div className="pos-catalog">
         <div className="pos-catalog-header">
-          <input placeholder="Search products…" value={search} onChange={e => setSearch(e.target.value)} autoFocus />
+          <input placeholder="Search products…" value={search} onChange={e => setSearch(e.target.value)} />
+          <input placeholder="Scan barcode / SKU…" style={{ maxWidth: 200 }} onKeyDown={handleScan} autoFocus />
         </div>
         <div className="pos-cats">
           {categories.map(c => (
@@ -80,6 +94,9 @@ export default function POS() {
         <div className="pos-grid">
           {visible.map(p => (
             <button key={p.id} className="pos-tile" onClick={() => addToCart(p)}>
+              {p.photo_url
+                ? <img src={p.photo_url} alt="" className="pos-tile-img" />
+                : <div className="pos-tile-img pos-tile-noimg">{p.description.slice(0, 1).toUpperCase()}</div>}
               <span className="name">{p.description}</span>
               <span className="price">{fmt(p.sell || p.cost || 0)}</span>
               {(p.stock || 0) <= 3 && (p.stock || 0) > 0 && <span className="low">Low stock: {p.stock}</span>}

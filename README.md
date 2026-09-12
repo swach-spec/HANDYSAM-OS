@@ -94,6 +94,33 @@ accountant only) gives a dedicated register screen:
 - Responsive down to a phone: the register panel stacks below the
   catalog instead of sitting beside it.
 
+## Product photos, SKU, and barcode/QR scanning
+
+Run `08a-sku-barcode-photo.sql` then `08b-storage-bucket-photos.sql`.
+
+- **SKU** — auto-generated (`HS-00001`, `HS-00002`, ...) the moment a
+  product is created. Read-only in the app; it's your own internal
+  identifier, guaranteed unique.
+- **Barcode** — optional, for a manufacturer's printed barcode if the
+  item has one. Editable in Products — click into the field and
+  either type it or scan it (see below), then press Enter or click
+  away to save.
+- **Photo** — click the thumbnail square in Products to upload one
+  from your device. Shows on the POS product tile once set.
+- **Barcode/QR scanning** — any USB or Bluetooth barcode/QR scanner
+  works out of the box, with no extra setup or library. These
+  devices work by typing the code as keystrokes into whatever's
+  focused, then pressing Enter — exactly like a keyboard. So:
+  - In **POS**, the "Scan barcode / SKU" field is focused by
+    default — scan an item and it's added to the cart immediately.
+  - In **Products**, click into a row's Barcode field and scan to
+    fill it in.
+  - A **phone camera** as a scanner (rather than a dedicated
+    handheld scanner) is a separate feature — it needs a
+    camera-scanning library and permissions handling. Worth adding
+    if you don't want to buy dedicated scanner hardware, but it's a
+    genuinely different build — say the word if you want it.
+
 ## 2. Configure the app
 
 ```bash
