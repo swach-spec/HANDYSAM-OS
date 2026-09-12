@@ -47,6 +47,32 @@ something fails partway:
     ledger-mirroring for both: a confirmed credit note reduces income
     in `transactions`, a paid bill records as an expense
 
+## Roles & logins
+
+Run `06a` through `06f` (in order) to add role-based access:
+
+- **admin** — full access everywhere
+- **accountant** — full access to Quotations, Invoices, Receipts,
+  Credit Notes, Expenses, Books; view-only on Bills; **no** access to
+  Products/Inventory edits
+- **procurement** — full access to Products, Inventory, Bills; **no**
+  access at all to Quotations, Invoices, Receipts, Credit Notes,
+  Expenses, Books, or Settings
+
+This is enforced with Postgres Row Level Security, not just hidden UI
+— even a direct API call is blocked for the wrong role. `06a` also
+bootstraps every *existing* Supabase Auth user as `admin` (so you're
+not locked out), and adds an admin-only "Manage Users" panel in
+Settings to assign roles to anyone who signs in afterward — they need
+to sign in at least once first so their account exists in Supabase
+Auth, then an admin assigns their role by email.
+
+Invoice confirmation deducts stock, which crosses the
+accounting/inventory boundary — `06e` handles this with a
+`security definer` database function so an accountant can confirm an
+invoice (their permission) without being granted direct write access
+to inventory tables (which they shouldn't have).
+
 ## 2. Configure the app
 
 ```bash

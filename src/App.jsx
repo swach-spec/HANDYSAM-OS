@@ -24,8 +24,15 @@ const TABS = [
   { id: 'settings', label: 'Settings' },
 ];
 
-export default function App({ session }) {
-  const [tab, setTab] = useState('dashboard');
+const ROLE_TABS = {
+  admin: TABS.map(t => t.id),
+  accountant: ['dashboard', 'quotations', 'invoices', 'credit-notes', 'bills', 'expenses', 'books'],
+  procurement: ['products', 'inventory', 'bills'],
+};
+
+export default function App({ session, role }) {
+  const allowed = ROLE_TABS[role] || [];
+  const [tab, setTab] = useState(allowed[0] || 'dashboard');
 
   return (
     <>
@@ -36,12 +43,12 @@ export default function App({ session }) {
         </div>
         <span className="muted" style={{ color: '#cfd2d8' }}>{new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
         <div className="row">
-          <span className="muted" style={{ color: '#cfd2d8' }}>{session?.user?.email}</span>
+          <span className="muted" style={{ color: '#cfd2d8' }}>{session?.user?.email} · <span style={{ textTransform: 'capitalize' }}>{role}</span></span>
           <button className="btn ghost sm" onClick={() => supabase.auth.signOut()}>Sign out</button>
         </div>
       </header>
       <nav className="tabs">
-        {TABS.map(t => (
+        {TABS.filter(t => allowed.includes(t.id)).map(t => (
           <button key={t.id} className={tab === t.id ? 'active' : ''} onClick={() => setTab(t.id)}>{t.label}</button>
         ))}
       </nav>
@@ -51,11 +58,11 @@ export default function App({ session }) {
         {tab === 'quotations' && <Quotations />}
         {tab === 'invoices' && <Invoices />}
         {tab === 'credit-notes' && <CreditNotes />}
-        {tab === 'bills' && <Bills />}
+        {tab === 'bills' && <Bills role={role} />}
         {tab === 'inventory' && <Inventory />}
         {tab === 'expenses' && <Expenses />}
         {tab === 'books' && <Books />}
-        {tab === 'settings' && <Settings />}
+        {tab === 'settings' && <Settings role={role} />}
       </main>
       <div className="footer-note">HandySam OS — data lives in Supabase, shared live with Meide Command Center.</div>
     </>

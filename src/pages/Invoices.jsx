@@ -79,15 +79,8 @@ export default function Invoices() {
 
   async function confirmInvoice(inv) {
     if (!confirm('Confirm this invoice? Stock will be deducted for tracked items and it will be locked from editing.')) return;
-    const { data: items } = await supabase.from('handysam_invoice_items').select('*').eq('invoice_id', inv.id);
-    for (const it of items || []) {
-      if (!it.product_id) continue;
-      const prod = products.find(p => p.id === it.product_id);
-      const newStock = (prod?.stock || 0) - it.qty;
-      await supabase.from('handysam_products').update({ stock: newStock }).eq('id', it.product_id);
-      await supabase.from('handysam_stock_moves').insert({ product_id: it.product_id, description: it.description, type: 'out', qty: it.qty, note: 'Invoice ' + inv.number });
-    }
-    await supabase.from('handysam_invoices').update({ doc_status: 'confirmed' }).eq('id', inv.id);
+    const { error } = await supabase.rpc('handysam_confirm_invoice', { p_invoice_id: inv.id });
+    if (error) { alert(error.message); return; }
     loadAll();
   }
 

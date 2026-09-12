@@ -13,7 +13,8 @@ function billTotals(items, includeVat) {
   return { subtotal, vat, total: subtotal + vat };
 }
 
-export default function Bills() {
+export default function Bills({ role }) {
+  const canWrite = role === 'admin' || role === 'procurement';
   const [settings, setSettings] = useState(null);
   const [products, setProducts] = useState([]);
   const [bills, setBills] = useState([]);
@@ -111,7 +112,7 @@ export default function Bills() {
       <div className="card">
         <div className="row" style={{ justifyContent: 'space-between' }}>
           <h2 style={{ margin: 0 }}>Bills (Accounts Payable)</h2>
-          <button className="btn gold" onClick={startNew}>+ New Bill</button>
+          <button className="btn gold" onClick={startNew} disabled={!canWrite} style={!canWrite ? { opacity: 0.4, cursor: 'not-allowed' } : {}}>+ New Bill</button>
         </div>
         <table>
           <thead><tr><th>#</th><th>Date</th><th>Vendor</th><th>Due</th><th>Total</th><th>Status</th><th></th></tr></thead>
@@ -121,11 +122,11 @@ export default function Bills() {
                 <td>{b.number}</td><td>{b.date}</td><td>{b.vendor}</td><td>{b.due_date || '—'}</td><td>{fmt(b.total)}</td>
                 <td><span className={`badge ${b.status}`}>{b.status}</span></td>
                 <td className="row">
-                  {b.status === 'draft' && <button className="btn ghost sm" onClick={() => openExisting(b)}>Open</button>}
+                  {b.status === 'draft' && canWrite && <button className="btn ghost sm" onClick={() => openExisting(b)}>Open</button>}
                   <button className="btn ghost sm" onClick={() => downloadPDF(b)}>PDF</button>
-                  {b.status === 'draft' && <button className="btn gold sm" onClick={() => confirmBill(b)}>Confirm</button>}
-                  {b.status === 'confirmed' && <button className="btn ghost sm" onClick={() => editConfirmed(b)}>Edit</button>}
-                  {b.status === 'confirmed' && <button className="btn gold sm" onClick={() => markPaid(b)}>Mark Paid</button>}
+                  {b.status === 'draft' && canWrite && <button className="btn gold sm" onClick={() => confirmBill(b)}>Confirm</button>}
+                  {b.status === 'confirmed' && canWrite && <button className="btn ghost sm" onClick={() => editConfirmed(b)}>Edit</button>}
+                  {b.status === 'confirmed' && canWrite && <button className="btn gold sm" onClick={() => markPaid(b)}>Mark Paid</button>}
                 </td>
               </tr>
             ))}
