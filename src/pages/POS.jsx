@@ -51,7 +51,7 @@ export default function POS() {
     setCart(c => {
       const idx = c.findIndex(x => x.productId === p.id);
       if (idx >= 0) { const copy = c.slice(); copy[idx] = { ...copy[idx], qty: copy[idx].qty + 1 }; return copy; }
-      return [...c, { productId: p.id, description: p.description, uom: p.uom, price: p.sell || p.cost || 0, qty: 1 }];
+      return [...c, { productId: p.id, sku: p.sku, description: p.description, uom: p.uom, price: p.sell || p.cost || 0, qty: 1 }];
     });
   }
   function setQty(idx, qty) {
@@ -63,7 +63,7 @@ export default function POS() {
     if (cart.length === 0 || !payment) return;
     setCharging(true);
     const { data, error } = await supabase.rpc('handysam_pos_sale', {
-      p_client: customer, p_items: cart.map(it => ({ product_id: it.productId, description: it.description, uom: it.uom, qty: it.qty, price: it.price })),
+      p_client: customer, p_items: cart.map(it => ({ product_id: it.productId, sku: it.sku, description: it.description, uom: it.uom, qty: it.qty, price: it.price })),
       p_discount_pct: discountPct, p_payment_method: payment,
     });
     setCharging(false);
@@ -104,7 +104,7 @@ export default function POS() {
             <button key={p.id} className="pos-tile" onClick={() => addToCart(p)}>
               {p.photo_url
                 ? <img src={p.photo_url} alt="" className="pos-tile-img" />
-                : <div className="pos-tile-img pos-tile-noimg">{p.description.slice(0, 1).toUpperCase()}</div>}
+                : <div className="pos-tile-img pos-tile-noimg">No photo uploaded</div>}
               <span className="name">{p.description}</span>
               <span className="price">{fmt(p.sell || p.cost || 0)}</span>
               {(p.stock || 0) <= 3 && (p.stock || 0) > 0 && <span className="low">Low stock: {p.stock}</span>}
@@ -131,7 +131,7 @@ export default function POS() {
               {cart.length === 0 && <div className="pos-cart-empty">Tap a product to add it</div>}
               {cart.map((it, idx) => (
                 <div className="pos-line" key={idx}>
-                  <div className="desc">{it.description}<span className="unit">{fmt(it.price)} / {it.uom || 'unit'}</span></div>
+                  <div className="desc">{it.description}<span className="unit">{it.sku ? it.sku + ' · ' : ''}{fmt(it.price)} / {it.uom || 'unit'}</span></div>
                   <div className="pos-qty">
                     <button onClick={() => setQty(idx, it.qty - 1)}>−</button>
                     <span>{it.qty}</span>

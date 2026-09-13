@@ -54,12 +54,12 @@ function billBlock(doc, label, client, contact, y) {
 function itemsTable(doc, items, startY) {
   autoTable(doc, {
     startY,
-    head: [['DESCRIPTION', 'UOM', 'QTY', 'UNIT PRICE', 'AMOUNT']],
-    body: items.map(it => [it.description, it.uom || '', it.qty, fmt(it.price), fmt((it.price || 0) * it.qty)]),
+    head: [['SKU', 'DESCRIPTION', 'UOM', 'QTY', 'UNIT PRICE', 'AMOUNT']],
+    body: items.map(it => [it.sku || '—', it.description, it.uom || '', it.qty, fmt(it.price), fmt((it.price || 0) * it.qty)]),
     headStyles: { fillColor: DARK, textColor: 255, fontSize: 8.5, halign: 'left' },
     bodyStyles: { fontSize: 9, textColor: [40, 40, 40] },
     alternateRowStyles: { fillColor: [248, 248, 248] },
-    columnStyles: { 2: { halign: 'center' }, 3: { halign: 'right' }, 4: { halign: 'right' } },
+    columnStyles: { 0: { cellWidth: 22 }, 3: { halign: 'center' }, 4: { halign: 'right' }, 5: { halign: 'right' } },
     theme: 'striped',
     margin: { left: 14, right: 14 },
   });
@@ -117,16 +117,16 @@ export function buildStockListPDF(settings, products) {
   docHeader(doc, settings, 'Stock List', new Date().toLocaleDateString('en-GB'), new Date().toISOString().slice(0, 10));
   autoTable(doc, {
     startY: 67,
-    head: [['CATEGORY', 'DESCRIPTION', 'UOM', 'COST', 'SELL', 'STOCK']],
-    body: products.map(p => [p.category || '', p.description, p.uom || '', p.cost ? fmt(p.cost) : '—', p.sell ? fmt(p.sell) : '—', p.stock ?? 0]),
+    head: [['SKU', 'CATEGORY', 'DESCRIPTION', 'UOM', 'COST', 'SELL', 'STOCK']],
+    body: products.map(p => [p.sku || '—', p.category || '', p.description, p.uom || '', p.cost ? fmt(p.cost) : '—', p.sell ? fmt(p.sell) : '—', p.stock ?? 0]),
     headStyles: { fillColor: DARK, textColor: 255, fontSize: 8.5, halign: 'left' },
     bodyStyles: { fontSize: 8.5, textColor: [40, 40, 40] },
     alternateRowStyles: { fillColor: [248, 248, 248] },
-    columnStyles: { 3: { halign: 'right' }, 4: { halign: 'right' }, 5: { halign: 'center' } },
+    columnStyles: { 4: { halign: 'right' }, 5: { halign: 'right' }, 6: { halign: 'center' } },
     theme: 'striped',
     margin: { left: 14, right: 14 },
     didParseCell: (data) => {
-      if (data.column.index === 5 && data.section === 'body' && Number(data.cell.raw) <= 3) {
+      if (data.column.index === 6 && data.section === 'body' && Number(data.cell.raw) <= 3) {
         data.cell.styles.textColor = [190, 60, 50];
         data.cell.styles.fontStyle = 'bold';
       }

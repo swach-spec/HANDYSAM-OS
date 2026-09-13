@@ -106,7 +106,9 @@ Run `08a-sku-barcode-photo.sql` then `08b-storage-bucket-photos.sql`.
   either type it or scan it (see below), then press Enter or click
   away to save.
 - **Photo** — click the thumbnail square in Products to upload one
-  from your device. Shows on the POS product tile once set.
+  from your device. Shows on the POS product tile once set; if none
+  is uploaded, the tile clearly says "No photo uploaded" instead of
+  showing a placeholder image.
 - **Barcode/QR scanning** — any USB or Bluetooth barcode/QR scanner
   works out of the box, with no extra setup or library. These
   devices work by typing the code as keystrokes into whatever's
@@ -115,6 +117,13 @@ Run `08a-sku-barcode-photo.sql` then `08b-storage-bucket-photos.sql`.
     default — scan an item and it's added to the cart immediately.
   - In **Products**, click into a row's Barcode field and scan to
     fill it in.
+- **SKU everywhere** — run `09a-sku-on-line-items.sql` then
+  `09b-sku-in-functions.sql`. The product's SKU is copied onto every
+  quotation, invoice, credit note, and bill line item, every stock
+  movement, and every POS sale at the moment it's created — same
+  pattern already used for description/uom, so it survives even if
+  the product is later edited or deleted, and prints on every PDF.
+
   - **Phone camera scanning** is also built in — tap the 📷 Camera
     button in POS (or next to a product's Barcode field in Products)
     to open a live camera overlay that decodes barcodes and QR codes

@@ -32,7 +32,7 @@ export default function Quotations() {
     setDraft({
       id: q.id, number: q.number, date: q.date, client: q.client, client_contact: q.client_contact || '',
       notes: q.notes || '', discountPct: q.discount_pct || 0, status: q.status,
-      items: (items || []).map(it => ({ productId: it.product_id, description: it.description, uom: it.uom, qty: it.qty, price: it.price })),
+      items: (items || []).map(it => ({ productId: it.product_id, sku: it.sku, description: it.description, uom: it.uom, qty: it.qty, price: it.price })),
     });
   }
 
@@ -50,7 +50,7 @@ export default function Quotations() {
   }
 
   function addLine(p) {
-    setDraft(d => ({ ...d, items: [...d.items, { productId: p.id, description: p.description, uom: p.uom, qty: 1, price: p.sell || p.cost || 0 }] }));
+    setDraft(d => ({ ...d, items: [...d.items, { productId: p.id, sku: p.sku, description: p.description, uom: p.uom, qty: 1, price: p.sell || p.cost || 0 }] }));
     setPicking(false);
   }
   function updateLine(idx, field, val) {
@@ -77,7 +77,7 @@ export default function Quotations() {
         subtotal: t.subtotal, discount: t.discount, vat: t.vat, total: t.total, status: 'draft',
       }).select('*').single();
       if (error) { alert(error.message); return; }
-      const items = draft.items.map(it => ({ quotation_id: q.id, product_id: it.productId, description: it.description, uom: it.uom, qty: it.qty, price: it.price }));
+      const items = draft.items.map(it => ({ quotation_id: q.id, product_id: it.productId, sku: it.sku, description: it.description, uom: it.uom, qty: it.qty, price: it.price }));
       await supabase.from('handysam_quotation_items').insert(items);
     } else {
       await supabase.from('handysam_quotations').update({
@@ -86,7 +86,7 @@ export default function Quotations() {
         subtotal: t.subtotal, discount: t.discount, vat: t.vat, total: t.total,
       }).eq('id', draft.id);
       await supabase.from('handysam_quotation_items').delete().eq('quotation_id', draft.id);
-      const items = draft.items.map(it => ({ quotation_id: draft.id, product_id: it.productId, description: it.description, uom: it.uom, qty: it.qty, price: it.price }));
+      const items = draft.items.map(it => ({ quotation_id: draft.id, product_id: it.productId, sku: it.sku, description: it.description, uom: it.uom, qty: it.qty, price: it.price }));
       await supabase.from('handysam_quotation_items').insert(items);
     }
     setDraft(null);
@@ -105,7 +105,7 @@ export default function Quotations() {
 
   async function downloadSavedPDF(q) {
     const { data: items } = await supabase.from('handysam_quotation_items').select('*').eq('quotation_id', q.id);
-    const doc = buildQuotePDF(settings, q, (items || []).map(it => ({ description: it.description, uom: it.uom, qty: it.qty, price: it.price })));
+    const doc = buildQuotePDF(settings, q, (items || []).map(it => ({ sku: it.sku, description: it.description, uom: it.uom, qty: it.qty, price: it.price })));
     doc.save(q.number + '.pdf');
   }
 
@@ -121,7 +121,7 @@ export default function Quotations() {
       status: 'unpaid', doc_status: 'draft',
     }).select('*').single();
     if (error) { alert(error.message); return; }
-    const invItems = (items || []).map(it => ({ invoice_id: inv.id, product_id: it.product_id, description: it.description, uom: it.uom, qty: it.qty, price: it.price }));
+    const invItems = (items || []).map(it => ({ invoice_id: inv.id, product_id: it.product_id, sku: it.sku, description: it.description, uom: it.uom, qty: it.qty, price: it.price }));
     await supabase.from('handysam_invoice_items').insert(invItems);
     await supabase.from('handysam_quotations').update({ status: 'invoiced' }).eq('id', q.id);
     loadAll();
@@ -178,11 +178,11 @@ export default function Quotations() {
 
           <h3 style={{ marginTop: 16 }}>Line items</h3>
           <table>
-            <thead><tr><th style={{ width: '35%' }}>Product</th><th>UOM</th><th>Qty</th><th>Unit Price</th><th>Line Total</th><th></th></tr></thead>
+            <thead><tr><th style={{ width: '30%' }}>Product</th><th>SKU</th><th>UOM</th><th>Qty</th><th>Unit Price</th><th>Line Total</th><th></th></tr></thead>
             <tbody>
               {draft.items.map((it, idx) => (
                 <tr key={idx}>
-                  <td>{it.description}</td><td>{it.uom}</td>
+                  <td>{it.description}</td><td className="muted">{it.sku || '—'}</td><td>{it.uom}</td>
                   <td><input type="number" min="0" style={{ width: 70 }} defaultValue={it.qty} onBlur={e => updateLine(idx, 'qty', e.target.value)} /></td>
                   <td><input type="number" min="0" style={{ width: 100 }} defaultValue={it.price} onBlur={e => updateLine(idx, 'price', e.target.value)} /></td>
                   <td>{fmt(it.qty * it.price)}</td>

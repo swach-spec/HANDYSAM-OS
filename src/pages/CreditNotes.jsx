@@ -39,11 +39,11 @@ export default function CreditNotes() {
     setDraft({
       id: n.id, number: n.number, date: n.date, invoiceId: n.invoice_id || '', client: n.client, client_contact: n.client_contact || '',
       reason: n.reason || '', notes: n.notes || '', discountPct: n.discount_pct || 0, status: n.status,
-      items: (items || []).map(it => ({ productId: it.product_id, description: it.description, uom: it.uom, qty: it.qty, price: it.price })),
+      items: (items || []).map(it => ({ productId: it.product_id, sku: it.sku, description: it.description, uom: it.uom, qty: it.qty, price: it.price })),
     });
   }
 
-  function addLine(p) { setDraft(d => ({ ...d, items: [...d.items, { productId: p.id, description: p.description, uom: p.uom, qty: 1, price: p.sell || p.cost || 0 }] })); setPicking(false); }
+  function addLine(p) { setDraft(d => ({ ...d, items: [...d.items, { productId: p.id, sku: p.sku, description: p.description, uom: p.uom, qty: 1, price: p.sell || p.cost || 0 }] })); setPicking(false); }
   function addCustomLine() {
     const description = prompt('Line description:'); if (!description) return;
     const qty = Number(prompt('Qty:', '1')) || 1;
@@ -66,7 +66,7 @@ export default function CreditNotes() {
         subtotal: t.subtotal, discount: t.discount, vat: t.vat, total: t.total, status: 'draft',
       }).select('*').single();
       if (error) { alert(error.message); return; }
-      const items = draft.items.map(it => ({ credit_note_id: cn.id, product_id: it.productId, description: it.description, uom: it.uom, qty: it.qty, price: it.price }));
+      const items = draft.items.map(it => ({ credit_note_id: cn.id, product_id: it.productId, sku: it.sku, description: it.description, uom: it.uom, qty: it.qty, price: it.price }));
       await supabase.from('handysam_credit_note_items').insert(items);
     } else {
       await supabase.from('handysam_credit_notes').update({
@@ -75,7 +75,7 @@ export default function CreditNotes() {
         subtotal: t.subtotal, discount: t.discount, vat: t.vat, total: t.total,
       }).eq('id', draft.id);
       await supabase.from('handysam_credit_note_items').delete().eq('credit_note_id', draft.id);
-      const items = draft.items.map(it => ({ credit_note_id: draft.id, product_id: it.productId, description: it.description, uom: it.uom, qty: it.qty, price: it.price }));
+      const items = draft.items.map(it => ({ credit_note_id: draft.id, product_id: it.productId, sku: it.sku, description: it.description, uom: it.uom, qty: it.qty, price: it.price }));
       await supabase.from('handysam_credit_note_items').insert(items);
     }
     setDraft(null);
@@ -96,7 +96,7 @@ export default function CreditNotes() {
 
   async function downloadPDF(n) {
     const { data: items } = await supabase.from('handysam_credit_note_items').select('*').eq('credit_note_id', n.id);
-    const doc = buildCreditNotePDF(settings, n, (items || []).map(it => ({ description: it.description, uom: it.uom, qty: it.qty, price: it.price })), n.handysam_invoices?.number);
+    const doc = buildCreditNotePDF(settings, n, (items || []).map(it => ({ sku: it.sku, description: it.description, uom: it.uom, qty: it.qty, price: it.price })), n.handysam_invoices?.number);
     doc.save(n.number + '.pdf');
   }
 
@@ -154,11 +154,11 @@ export default function CreditNotes() {
 
           <h3 style={{ marginTop: 16 }}>Line items</h3>
           <table>
-            <thead><tr><th style={{ width: '35%' }}>Description</th><th>UOM</th><th>Qty</th><th>Unit Price</th><th>Line Total</th><th></th></tr></thead>
+            <thead><tr><th style={{ width: '30%' }}>Description</th><th>SKU</th><th>UOM</th><th>Qty</th><th>Unit Price</th><th>Line Total</th><th></th></tr></thead>
             <tbody>
               {draft.items.map((it, idx) => (
                 <tr key={idx}>
-                  <td>{it.description}</td><td>{it.uom}</td>
+                  <td>{it.description}</td><td className="muted">{it.sku || '—'}</td><td>{it.uom}</td>
                   <td><input type="number" min="0" style={{ width: 70 }} defaultValue={it.qty} onBlur={e => updateLine(idx, 'qty', e.target.value)} /></td>
                   <td><input type="number" min="0" style={{ width: 100 }} defaultValue={it.price} onBlur={e => updateLine(idx, 'price', e.target.value)} /></td>
                   <td>{fmt(it.qty * it.price)}</td>
