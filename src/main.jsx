@@ -30,7 +30,10 @@ function Root() {
         <div>
           <h2>No role assigned yet</h2>
           <p style={{ color: '#aaa', maxWidth: 360 }}>You're signed in as {session.user.email}, but an admin needs to assign you a role (admin, accountant, or procurement) before you can use HandySam OS.</p>
-          <button className="btn ghost" onClick={() => supabase.auth.signOut()}>Sign out</button>
+          <button onClick={() => supabase.auth.signOut()}
+            style={{ padding: '9px 16px', borderRadius: 6, border: '1px solid #ed6a23', background: 'transparent', color: '#ed6a23', fontWeight: 600, cursor: 'pointer' }}>
+            Sign out
+          </button>
         </div>
       </div>
     );

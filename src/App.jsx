@@ -46,7 +46,10 @@ export default function App({ session, role }) {
         <span className="muted" style={{ color: '#cfd2d8' }}>{new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
         <div className="row">
           <span className="muted" style={{ color: '#cfd2d8' }}>{session?.user?.email} · <span style={{ textTransform: 'capitalize' }}>{role}</span></span>
-          <button className="btn ghost sm" onClick={() => supabase.auth.signOut()}>Sign out</button>
+          <button onClick={() => supabase.auth.signOut()}
+            style={{ padding: '6px 12px', borderRadius: 5, border: '1px solid #ed6a23', background: 'transparent', color: '#ed6a23', fontWeight: 600, fontSize: 12.5, cursor: 'pointer' }}>
+            Sign out
+          </button>
         </div>
       </header>
       <nav className="tabs">
