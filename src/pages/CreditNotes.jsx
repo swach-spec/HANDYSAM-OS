@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { fmt, todayISO, calcTotals, nextNumber } from '../lib/format';
 import { buildCreditNotePDF } from '../lib/pdf';
+import { loadStaffDirectory, getMyEmail } from '../lib/staff';
 import ProductPicker from './ProductPicker';
 
 function emptyDraft() {
@@ -15,6 +16,8 @@ export default function CreditNotes() {
   const [notes, setNotes] = useState([]);
   const [draft, setDraft] = useState(null);
   const [picking, setPicking] = useState(false);
+  const [staff, setStaff] = useState({});
+  const [myEmail, setMyEmail] = useState('');
 
   async function loadAll() {
     const [{ data: s }, { data: p }, { data: inv }, { data: cn }] = await Promise.all([
@@ -24,6 +27,8 @@ export default function CreditNotes() {
       supabase.from('handysam_credit_notes').select('*, handysam_invoices(number)').order('created_at', { ascending: false }),
     ]);
     setSettings(s); setProducts(p || []); setInvoices(inv || []); setNotes(cn || []);
+    setStaff(await loadStaffDirectory(supabase));
+    setMyEmail(await getMyEmail(supabase));
   }
   useEffect(() => { loadAll(); }, []);
 
@@ -96,7 +101,8 @@ export default function CreditNotes() {
 
   async function downloadPDF(n) {
     const { data: items } = await supabase.from('handysam_credit_note_items').select('*').eq('credit_note_id', n.id);
-    const doc = buildCreditNotePDF(settings, n, (items || []).map(it => ({ sku: it.sku, description: it.description, uom: it.uom, qty: it.qty, price: it.price })), n.handysam_invoices?.number);
+    const doc = buildCreditNotePDF(settings, { ...n, servedByEmail: staff[n.created_by] || myEmail },
+      (items || []).map(it => ({ sku: it.sku, description: it.description, uom: it.uom, qty: it.qty, price: it.price })), n.handysam_invoices?.number);
     doc.save(n.number + '.pdf');
   }
 

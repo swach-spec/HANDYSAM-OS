@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { fmt, todayISO, calcTotals, nextNumber } from '../lib/format';
 import { buildQuotePDF } from '../lib/pdf';
+import { loadStaffDirectory, getMyEmail } from '../lib/staff';
 import ProductPicker from './ProductPicker';
 
 function emptyDraft() {
@@ -14,6 +15,8 @@ export default function Quotations() {
   const [quotes, setQuotes] = useState([]);
   const [draft, setDraft] = useState(null);
   const [picking, setPicking] = useState(false);
+  const [staff, setStaff] = useState({});
+  const [myEmail, setMyEmail] = useState('');
 
   async function loadAll() {
     const [{ data: s }, { data: p }, { data: q }] = await Promise.all([
@@ -22,6 +25,8 @@ export default function Quotations() {
       supabase.from('handysam_quotations').select('*').order('created_at', { ascending: false }),
     ]);
     setSettings(s); setProducts(p || []); setQuotes(q || []);
+    setStaff(await loadStaffDirectory(supabase));
+    setMyEmail(await getMyEmail(supabase));
   }
   useEffect(() => { loadAll(); }, []);
 
@@ -99,13 +104,15 @@ export default function Quotations() {
     const doc = buildQuotePDF(settings, {
       number: draft.number, date: draft.date, client: draft.client, client_contact: draft.client_contact,
       notes: draft.notes, discount_pct: t.discountPct, subtotal: t.subtotal, discount: t.discount, vat: t.vat, total: t.total,
+      servedByEmail: staff[draft.created_by] || myEmail,
     }, draft.items);
     doc.save((draft.number || 'quotation') + '.pdf');
   }
 
   async function downloadSavedPDF(q) {
     const { data: items } = await supabase.from('handysam_quotation_items').select('*').eq('quotation_id', q.id);
-    const doc = buildQuotePDF(settings, q, (items || []).map(it => ({ sku: it.sku, description: it.description, uom: it.uom, qty: it.qty, price: it.price })));
+    const doc = buildQuotePDF(settings, { ...q, servedByEmail: staff[q.created_by] || myEmail },
+      (items || []).map(it => ({ sku: it.sku, description: it.description, uom: it.uom, qty: it.qty, price: it.price })));
     doc.save(q.number + '.pdf');
   }
 

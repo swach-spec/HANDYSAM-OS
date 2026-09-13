@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { fmt, calcTotals } from '../lib/format';
 import { buildReceiptPDF } from '../lib/pdf';
+import { getMyEmail } from '../lib/staff';
 import { lazy, Suspense } from 'react';
 const CameraScanner = lazy(() => import('./CameraScanner'));
 
@@ -17,10 +18,12 @@ export default function POS() {
   const [charging, setCharging] = useState(false);
   const [sale, setSale] = useState(null); // {invoiceNumber, receiptNumber, total}
   const [scanning, setScanning] = useState(false);
+  const [myEmail, setMyEmail] = useState('');
 
   useEffect(() => {
     supabase.from('handysam_settings').select('*').eq('venture', 'handysam').single().then(({ data }) => setSettings(data));
     supabase.from('handysam_products').select('*').order('description').then(({ data }) => setProducts(data || []));
+    getMyEmail(supabase).then(setMyEmail);
   }, []);
 
   const categories = useMemo(() => ['All', ...new Set(products.map(p => p.category).filter(Boolean))], [products]);
@@ -76,6 +79,7 @@ export default function POS() {
     const doc = buildReceiptPDF(settings, {
       number: sale.receipt_number, date: new Date().toISOString().slice(0, 10),
       client: customer || 'Walk-in Customer', amount: sale.total, method: payment, invoiceNumber: sale.invoice_number,
+      servedByEmail: myEmail,
     });
     doc.save(sale.receipt_number + '.pdf');
   }
@@ -121,6 +125,7 @@ export default function POS() {
             <div>Sale complete</div>
             <div className="amt">{fmt(sale.total)}</div>
             <div className="muted" style={{ color: '#999' }}>{sale.invoice_number} · {sale.receipt_number}</div>
+            <div className="muted" style={{ color: '#777', fontSize: 11.5 }}>Served by {myEmail}</div>
             <button className="btn gold" onClick={downloadReceipt} style={{ width: '100%' }}>Download Receipt PDF</button>
             <button className="pos-charge" onClick={newSale} style={{ width: '100%' }}>New Sale</button>
           </div>

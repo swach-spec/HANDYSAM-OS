@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { fmt, todayISO, VAT_RATE, nextNumber } from '../lib/format';
 import { buildBillPDF } from '../lib/pdf';
+import { loadStaffDirectory, getMyEmail } from '../lib/staff';
 import ProductPicker from './ProductPicker';
 
 function emptyDraft() {
@@ -20,6 +21,8 @@ export default function Bills({ role }) {
   const [bills, setBills] = useState([]);
   const [draft, setDraft] = useState(null);
   const [picking, setPicking] = useState(false);
+  const [staff, setStaff] = useState({});
+  const [myEmail, setMyEmail] = useState('');
 
   async function loadAll() {
     const [{ data: s }, { data: p }, { data: b }] = await Promise.all([
@@ -28,6 +31,8 @@ export default function Bills({ role }) {
       supabase.from('handysam_bills').select('*').order('created_at', { ascending: false }),
     ]);
     setSettings(s); setProducts(p || []); setBills(b || []);
+    setStaff(await loadStaffDirectory(supabase));
+    setMyEmail(await getMyEmail(supabase));
   }
   useEffect(() => { loadAll(); }, []);
 
@@ -100,7 +105,8 @@ export default function Bills({ role }) {
 
   async function downloadPDF(b) {
     const { data: items } = await supabase.from('handysam_bill_items').select('*').eq('bill_id', b.id);
-    const doc = buildBillPDF(settings, b, (items || []).map(it => ({ sku: it.sku, description: it.description, uom: it.uom, qty: it.qty, price: it.price })));
+    const doc = buildBillPDF(settings, { ...b, servedByEmail: staff[b.created_by] || myEmail },
+      (items || []).map(it => ({ sku: it.sku, description: it.description, uom: it.uom, qty: it.qty, price: it.price })));
     doc.save(b.number + '.pdf');
   }
 

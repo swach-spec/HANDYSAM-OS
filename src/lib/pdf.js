@@ -15,7 +15,7 @@ function decorateCorner(doc) {
   doc.setFillColor(...DARK); doc.triangle(W, H, W - 24, H, W, H - 14, 'F');
 }
 
-function docHeader(doc, settings, title, number, date) {
+function docHeader(doc, settings, title, number, date, servedBy) {
   decorateCorner(doc);
   doc.setFillColor(...DARK);
   doc.roundedRect(14, 10, 40, 26.7, 1.5, 1.5, 'F');
@@ -40,6 +40,10 @@ function docHeader(doc, settings, title, number, date) {
   doc.text('#' + number, 196, 49, { align: 'right' });
   doc.setFont(undefined, 'normal'); doc.setFontSize(9); doc.setTextColor(...GREY);
   doc.text('Date: ' + date, 196, 54, { align: 'right' });
+  if (servedBy) {
+    doc.setFontSize(8); doc.setTextColor(...GREY);
+    doc.text('Served by: ' + servedBy, 196, 59, { align: 'right' });
+  }
   doc.setTextColor(0, 0, 0);
 }
 
@@ -138,7 +142,7 @@ export function buildStockListPDF(settings, products) {
 export function buildCreditNotePDF(settings, note, items, invoiceNumber) {
   const t = { subtotal: note.subtotal, discountPct: note.discount_pct, discount: note.discount, vat: note.vat, total: note.total };
   const doc = new jsPDF();
-  docHeader(doc, settings, 'Credit Note', note.number || 'DRAFT', note.date);
+  docHeader(doc, settings, 'Credit Note', note.number || 'DRAFT', note.date, note.servedByEmail);
   billBlock(doc, 'ISSUED TO:', note.client, note.client_contact, 67);
   if (invoiceNumber) { doc.setFont(undefined, 'normal'); doc.setFontSize(9); doc.setTextColor(110, 110, 110); doc.text('Against invoice: ' + invoiceNumber, 48, 72); }
   let y = itemsTable(doc, items, 78);
@@ -152,7 +156,7 @@ export function buildCreditNotePDF(settings, note, items, invoiceNumber) {
 export function buildBillPDF(settings, bill, items) {
   const t = { subtotal: bill.subtotal, discountPct: 0, discount: 0, vat: bill.vat, total: bill.total };
   const doc = new jsPDF();
-  docHeader(doc, settings, 'Bill', bill.number || 'DRAFT', bill.date);
+  docHeader(doc, settings, 'Bill', bill.number || 'DRAFT', bill.date, bill.servedByEmail);
   billBlock(doc, 'FROM VENDOR:', bill.vendor, bill.due_date ? ('Due: ' + bill.due_date) : null, 67);
   let y = itemsTable(doc, items, 78);
   y += 10;
@@ -168,7 +172,7 @@ export function buildBillPDF(settings, bill, items) {
 export function buildQuotePDF(settings, quote, items) {
   const t = { subtotal: quote.subtotal, discountPct: quote.discount_pct, discount: quote.discount, vat: quote.vat, total: quote.total };
   const doc = new jsPDF();
-  docHeader(doc, settings, 'Quotation', quote.number || 'DRAFT', quote.date);
+  docHeader(doc, settings, 'Quotation', quote.number || 'DRAFT', quote.date, quote.servedByEmail);
   billBlock(doc, 'QUOTED TO:', quote.client, quote.client_contact, 67);
   let y = itemsTable(doc, items, 75);
   y += 10;
@@ -181,7 +185,7 @@ export function buildQuotePDF(settings, quote, items) {
 export function buildInvoicePDF(settings, invoice, items) {
   const t = { subtotal: invoice.subtotal, discountPct: invoice.discount_pct, discount: invoice.discount, vat: invoice.vat, total: invoice.total };
   const doc = new jsPDF();
-  docHeader(doc, settings, 'Invoice', invoice.number, invoice.date);
+  docHeader(doc, settings, 'Invoice', invoice.number, invoice.date, invoice.servedByEmail);
   billBlock(doc, 'BILLED TO:', invoice.client, invoice.client_contact, 67);
   let y = itemsTable(doc, items, 75);
   y += 10;
@@ -197,7 +201,7 @@ export function buildInvoicePDF(settings, invoice, items) {
 
 export function buildReceiptPDF(settings, receipt) {
   const doc = new jsPDF();
-  docHeader(doc, settings, 'Receipt', receipt.number, receipt.date);
+  docHeader(doc, settings, 'Receipt', receipt.number, receipt.date, receipt.servedByEmail);
   billBlock(doc, 'RECEIVED FROM:', receipt.client, null, 67);
   doc.setFont(undefined, 'normal'); doc.setFontSize(10); doc.setTextColor(60, 60, 60);
   doc.text('Against invoice: ' + (receipt.invoiceNumber || ''), 14, 80);

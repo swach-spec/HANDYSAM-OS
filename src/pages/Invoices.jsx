@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { fmt, todayISO, calcTotals, nextNumber } from '../lib/format';
 import { buildInvoicePDF, buildReceiptPDF } from '../lib/pdf';
+import { loadStaffDirectory, getMyEmail } from '../lib/staff';
 import ProductPicker from './ProductPicker';
 
 function emptyDraft() {
@@ -15,6 +16,8 @@ export default function Invoices() {
   const [receipts, setReceipts] = useState([]);
   const [draft, setDraft] = useState(null);
   const [picking, setPicking] = useState(false);
+  const [staff, setStaff] = useState({});
+  const [myEmail, setMyEmail] = useState('');
 
   async function loadAll() {
     const [{ data: s }, { data: p }, { data: inv }, { data: rcts }] = await Promise.all([
@@ -24,6 +27,8 @@ export default function Invoices() {
       supabase.from('handysam_receipts').select('*, handysam_invoices(number)').order('created_at', { ascending: false }),
     ]);
     setSettings(s); setProducts(p || []); setInvoices(inv || []); setReceipts(rcts || []);
+    setStaff(await loadStaffDirectory(supabase));
+    setMyEmail(await getMyEmail(supabase));
   }
   useEffect(() => { loadAll(); }, []);
 
@@ -91,14 +96,15 @@ export default function Invoices() {
 
   async function downloadInvoice(inv) {
     const { data: items } = await supabase.from('handysam_invoice_items').select('*').eq('invoice_id', inv.id);
-    const doc = buildInvoicePDF(settings, inv, (items || []).map(it => ({ sku: it.sku, description: it.description, uom: it.uom, qty: it.qty, price: it.price })));
+    const doc = buildInvoicePDF(settings, { ...inv, servedByEmail: staff[inv.created_by] || myEmail },
+      (items || []).map(it => ({ sku: it.sku, description: it.description, uom: it.uom, qty: it.qty, price: it.price })));
     doc.save(inv.number + '.pdf');
   }
 
   async function downloadReceipt(inv) {
     const r = receipts.find(x => x.invoice_id === inv.id);
     if (!r) { alert('No receipt found for this invoice.'); return; }
-    const doc = buildReceiptPDF(settings, { ...r, invoiceNumber: inv.number });
+    const doc = buildReceiptPDF(settings, { ...r, invoiceNumber: inv.number, servedByEmail: staff[r.created_by] || myEmail });
     doc.save(r.number + '.pdf');
   }
 

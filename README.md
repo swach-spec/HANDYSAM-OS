@@ -75,6 +75,19 @@ accounting/inventory boundary — `06e` handles this with a
 invoice (their permission) without being granted direct write access
 to inventory tables (which they shouldn't have).
 
+## "Served by" — who created each document
+
+Run `11a-created-by-and-staff-directory.sql`. Every quotation,
+invoice, receipt, credit note, and bill now records which logged-in
+user created it (`created_by`, defaulting automatically to the
+signed-in session — this works correctly even inside the POS-sale
+and invoice-confirm database functions, since Supabase resolves the
+caller's identity per-request regardless of a function's elevated
+privileges). Every PDF now prints "Served by: <email>" near the date.
+On a document created by someone else (e.g. an admin viewing an
+accountant's invoice), it resolves via a small staff-directory lookup
+so the right person's email shows, not the viewer's.
+
 ## Point of Sale (POS)
 
 Run `07a-pos-sale-fn.sql` to enable it. (If you're adding the `sales` role, run `10a-sales-role.sql` afterward — it also re-permits `handysam_pos_sale` for that role.) A new **POS** tab (admin and
