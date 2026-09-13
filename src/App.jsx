@@ -30,6 +30,7 @@ const ROLE_TABS = {
   admin: TABS.map(t => t.id),
   accountant: ['pos', 'dashboard', 'quotations', 'invoices', 'credit-notes', 'bills', 'expenses', 'books'],
   procurement: ['products', 'inventory', 'bills'],
+  sales: ['pos'],
 };
 
 export default function App({ session, role }) {

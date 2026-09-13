@@ -75,6 +75,7 @@ export default function Settings({ role }) {
               <option value="admin">Admin</option>
               <option value="accountant">Accountant</option>
               <option value="procurement">Procurement</option>
+              <option value="sales">Sales (POS only)</option>
             </select>
             <button className="btn gold" onClick={assignRole}>Assign</button>
           </div>

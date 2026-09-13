@@ -58,6 +58,8 @@ Run `06a` through `06f` (in order) to add role-based access:
 - **procurement** — full access to Products, Inventory, Bills; **no**
   access at all to Quotations, Invoices, Receipts, Credit Notes,
   Expenses, Books, or Settings
+- **sales** — POS only. Nothing else is visible or reachable, even
+  by direct API call.
 
 This is enforced with Postgres Row Level Security, not just hidden UI
 — even a direct API call is blocked for the wrong role. `06a` also
@@ -75,7 +77,7 @@ to inventory tables (which they shouldn't have).
 
 ## Point of Sale (POS)
 
-Run `07a-pos-sale-fn.sql` to enable it. A new **POS** tab (admin and
+Run `07a-pos-sale-fn.sql` to enable it. (If you're adding the `sales` role, run `10a-sales-role.sql` afterward — it also re-permits `handysam_pos_sale` for that role.) A new **POS** tab (admin and
 accountant only) gives a dedicated register screen:
 
 - Tap a product to add it to the sale — no confirmation dialog, no
